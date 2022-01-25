@@ -1,21 +1,14 @@
 # Documentação de integração com o Bonsae
-### Webhook de notas
-A requisição serão feita com o metodo post pela rota infomada durante a criação das instancias.
+Todas as requisições feitas em nossas rotas precisam ser com o método `POST`.
+### Envio de notas
+O envio de notas de uma turma será feito apenas quando a turma for concluída(Após o prazo final da prática estabelecido pelo professor na bonsae) 
+através de um job que rodará de madrugada a partir das 1 da manhã.
 
 ### Variáveis 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
 | class | array | Array com informações da turma|
-| class->code | string | Código da turma |
-| class->name | string | Nome da turma|
-| class->intern_id | int | Código interno |
-| student | array | Array com informações do aluno |
-| student->registration | string | Matrícula do aluno |
-| student->name | string | Nome do aluno |
-| student->email | string | Email do aluno |
-| student->intern_id | int | Código unico interno |
-| grade | int | Nota do aluno |
-| type | string | Tipo da tarefa |
+| practices | string | Array com todas as tarefas feitas(informações dos estudantes como nota e lista de presença estão dentro do array) |
 
 ### Exemplo de requisição
 
@@ -26,21 +19,41 @@ A requisição serão feita com o metodo post pela rota infomada durante a cria�
 	    "name":"turma teste"
 	    "intern_id":1
 	],
-	"student":[
-	    "registration":"12345678"
-	    "name":"aluno"
-	    "email":"aluno@teste.com"
-	    "intern_id":1
+	"practices":[
+	    {
+    	    "name":"teste",
+    	    "client":{
+    	        "name":"teste",
+    	        "cpf":"123.456.789-11",
+    	        "telephone":"(55)99999-9999"
+    	        "is_simulated":0,
+    	        "email":"teste@bonsae.com",
+    	        "lawsuit":"131313131"
+    	    },
+    	    "start_date": "2022-01-29",
+    	    "start_hour":"12:00",
+    	    "end_hour": "14:00"
+    	    "end_date":"2022-01-30"
+    	    "instruction":" teste 123",
+        	"student":[
+        	    {
+        	        "grade":6.0,
+            	    "registration_number":"12345678",
+            	    "name":"aluno",
+            	    "email":"aluno@teste.com",
+            	    "intern_id":1,
+            	    "presence":1
+        	    }
+        	]
+	   }
 	]
-	"grade":10,
-    "type": "ato",
 }
 ```
 # Autenticação via hash
 
-A integração via hash é bastante simples para facilitar a integração entre os sistemas, onde será preciso o nome, email, tipo de usuário e o código de validação .
+A integração via hash é bastante simples para facilitar a integração entre os sistemas, onde serão necessários:  email e código de validação .
 
-> url: https://instancia.bonsae.com.br/{tipo de usuário}/controller/DoAcess&name={`nome do usuário`}&email={`email do usuário` }&code={`código de validação`}
+> url: https://instancia.bonsae.com.br/api/webhook/DoAcess&email={`email do usuário` }&code={`código de validação`}
 
 ### Tipos de usuários
 
@@ -67,206 +80,214 @@ $type = 'coordenador';
 $hash = "example@151de";
 $code = md5($user->access_token.$hash);
 
-$url = https://instancia.bonsae.com.br/{$type}/controller/DoAcess&name={$user->name}&email={$user->email}&code={$code}
+$url = https://instancia.bonsae.com.br/api/webhook/DoAcess&email={$user->email}&code={$code}
 @endphp
 
 <a href="{{ $url }}" target="_blank" title="Bonsae">Bonsae</a>
 ```
 
-> url: https://bonsae.instancia.com.br/coordenador/controller/DoAcess&nome=exemplo&email=exemplo@teste.com&code=jbdxgfjkvbnvds
+> url: https://instancia.bonsae.com.br/api/webhook/DoAcess&email=exemplo@teste.com&code=jbdxgfjkvbnvds
 
-### Geração do access_toke
-Para segurança e integração dos dois sistemas os dois lados precisam ter uma coluna em seu banco chamada `access_token`, esse dado deve ser preenchido durante a criação de um novo usuário randomicamente.
+### Geração do access_token
+Para segurança e integração dos dois sistemas, os dois lados precisam ter uma coluna em seu banco chamada `access_token`, esse dado deve ser preenchido durante a criação de um novo usuário aleatoriamente.
 
-# Criação via webhook
+# Criação de usuários via webhook
 
-A criação de usuários e turma por webhook tem rotas dinâmicas para cada tipo de usuário. 
-> url: https://instancia.bonsae.com.br/api/{tipo do usuário}/create
+A criação de usuários via webhook possui apenas uma rota para facilitar a integração,mas tem como obrigatoriedade o envio do identificador de perfil.
 
-### Tipos de usuários e turma
+### Tipos de usuários e seus identificadores
 
-- coordenador
-- secretario
-- estagiario
-- professor
-- advogado
-- aluno
-- turma
+| tipo de perfil | identificador |
+| ------ | ------ |
+| coordenador | 1 |
+| professor | 2 |
+| secretário | 3 |
+| aluno | 4 |
+| advogado | 5 |
+| estagiário | 6 |
 
-### Variáveis para coordenador
+### Variáveis para 'coordenador'
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
-| `nome*` | string | Nome do coordenador |
+| `name*` | string | Nome do coordenador |
 | `email*` | string | Email do coordenador  |
-| `matricula*` | string | Matrícula do coordenador |
+| `registration_number*` | string | Matrícula do coordenador |
 | `access_token*` | string | Token para autenticação do usuário |
+| `profile_id*` | string | Identificador interno de perfil |
 | oab | string | Caso também seja o advogado responsável |
 
 ### Exemplo de requisição
-> url https://instancia.bonsae.com.br/api/coordenador/create
+> url https://instancia.bonsae.com.br/api/webhook/create-user
 ```
 {
-	"nome":"example",
+	"name":"example",
 	"email":"coordenador@teste.com",
-	"matricula":"12345678",
+	"registration_number":"12345678",
 	"access_token":"dsgvsd2v3f6"
 	"oab":"2626",
+	"profile_id":1
 }
 ```
 
-### Variáveis para secretario
+### Variáveis para 'secretário'
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
-| `nome*` | string | Nome do secretario |
-| `email*` | string | Email do secretario |
-| `matricula*` | string | Matrícula do secretario |
+| `name*` | string | Nome do secretário |
+| `email*` | string | Email do secretário |
+| `registration_number*` | string | Matrícula do secretário |
 | `access_token*` | string | Token para autenticação do usuário |
+| `profile_id*` | string | Identificador interno de perfil |
 
 ### Exemplo de requisição
-> url https://instancia.bonsae.com.br/api/secretario/create
+> url https://instancia.bonsae.com.br/api/webhook/create-user
 ```
 {
-	"nome":"example",
+	"name":"example",
 	"email":"secretario@teste.com",
-	"matricula":"12345678",
-	"access_token":"dsgvsd2v3f6"
+	"registration_number":"12345678",
+	"access_token":"dsgvsd2v3f6",
+	"profile_id":3
 }
 ```
 
-### Variáveis para estagiário
+### Variáveis para 'estagiário'
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
-| `nome*` | string | Nome do estagiário |
+| `name*` | string | Nome do estagiário |
 | `email*` | string | Email do estagiário  |
-| `matricula*` | string | Matricula do estagiário |
+| `registration_number*` | string | Matrícula do estagiário |
 | `access_token*` | string | Token para autenticação do usuário |
+| `profile_id*` | string | Identificador interno de perfil |
 
 ### Exemplo de requisição
-> url https://instancia.bonsae.com.br/api/estagiario/create
+> url https://instancia.bonsae.com.br/api/webhook/create-user
 ```
 {
-	"nome":"example",
+	"name":"example",
 	"email":"estagiario@teste.com",
-	"matricula":"12345678",
-	"access_token":"dsgvsd2v3f6"
+	"registration_number":"12345678",
+	"access_token":"dsgvsd2v3f6",
+	"profile_id": 6
 }
 ```
 
-### Variáveis para professor
+### Variáveis para 'professor'
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
-| `nome*` | string | Nome do professor |
+| `name*` | string | Nome do professor |
 | `email*` | string | Email do professor |
-| `matricula*` | string | Matrícula do professor |
+| `registration_number*` | string | Matrícula do professor |
 | `access_token*` | string | Token para autenticação do usuário |
+| `profile_id*` | string | Identificador interno de perfil |
 | oab | string | caso também seja o advogado responsável |
 
 ### Exemplo de requisição
-> url https://instancia.bonsae.com.br/api/professor/create
+> url https://instancia.bonsae.com.br/api/webhook/create-user
 ```
 {
-	"nome":"example",
+	"name":"example",
 	"email":"coordenador@teste.com",
-	"matricula":"12345678",
+	"registration_number":"12345678",
 	"access_token":"dsgvsd2v3f6"
 	"oab":"2626",
+	"profile_id": 2
 }
 ```
 
-### Variáveis para advogado
+### Variáveis para 'advogado'
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
-| `nome*` | string | Nome do advogado |
+| `name*` | string | Nome do advogado |
 | `email*` | string | Email do advodago |
-| `matricula*` | string | Matrícula do advogado |
+| `registration_number*` | string | Matrícula do advogado |
 | `access_token*` | string | Token para autenticação do usuário |
 | `oab*` | string | Oab do advogado |
+| `profile_id*` | string | Identificador interno de perfil |
 
 ### Exemplo de requisição
-> url https://instancia.bonsae.com.br/api/advogado/create
+> url https://instancia.bonsae.com.br/api/webhook/create-user
 ```
 {
-	"nome":"example",
+	"name":"example",
 	"email":"advogado@teste.com",
-	"matricula":"12345678",
+	"registration_number":"12345678",
 	"access_token":"dsgvsd2v3f6"
 	"oab":"2626",
+	"profile_id": 5
 }
 ```
 
-### Variáveis para aluno
+### Variáveis para 'aluno'
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
-| `nome*` | string | Nome do aluno |
+| `name*` | string | Nome do aluno |
 | `email*` | string | Email do aluno |
-| `matricula*` | string | Matrícula do aluno |
+| `registration_number*` | string | Matrícula do aluno |
 | `access_token*` | string | Token para autenticação do usuário |
+| `profile_id*` | string | Identificador interno de perfil |
 
 ### Exemplo de requisição
-> url https://instancia.bonsae.com.br/api/aluno/create
+> url https://instancia.bonsae.com.br/api/webhook/create-user
 ```
 {
-	"nome":"example",
+	"name":"example",
 	"email":"aluno@teste.com",
-	"matricula":"12345678",
-	"access_token":"dsgvsd2v3f6"
+	"registration_number":"12345678",
+	"access_token":"dsgvsd2v3f6",
+	"profile_id": 4
 }
 ```
 ### Variáveis para turma
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
-| `nome*` | string | Nome da turma |
-| `disciplina*` | string | Diciplina da turma |
-| `emailProfessor*` | string | Email do professor( o prefessor precisa ja estar cadastrado na plataforma) |
-| `codigo*` | string | Código de identificação da turma |
-| `campus*` | string | Sigla do campus da instancia |
-| `data_inicio*` | date | Data de inicio da turma |
-| `data_final*` | date | Data de finalização da turma |
+| `name*` | string | Nome da turma |
+| `emailTeacher*` | string | Email do professor(o professor precisa já estar cadastrado na plataforma) |
+| `subject*` | string | Código de identificação da turma |
+| `campus_name*` | string | Nome da cidade ou identificador do campus (Ex.: "Salvador" ou "Unidade 1" |
+| `campus_uf*` | string | Uf do estado do campus da instância |
+| `start_date*` | date | Data de início da turma |
+| `end_date*` | date | Data de finalização da turma |
 
 ### Exemplo de requisição
-> url https://instancia.bonsae.com.br/api/turma/create
+> url https://instancia.bonsae.com.br/api/webhook/create-class
 ```
 {
-	"nome":"bobe",
-	"disciplina":"curso",
-	"emailProfessor":"professorteste@teste.com",
-	"codigo":"23",
-	"campus":"ES",
-	"data_inicio":"2020-07-31 17:58:35",
-	"data_final":"2020-07-31 17:58:35"
+	"name":"bobe",
+	"emailTeacher":"professorteste@teste.com",
+	"subject":"23",
+	"campus_name":"Aracaju",
+	"campus_uf":"SE",
+	"start_date":"31/01/2022",
+	"end_date":"01/06/2022"
 }
 ```
 # Adicionando um usuário a uma turma
 
-> url https://instancia.bonsae.com.br/api/turma/turma_aluno
+> url https://instancia.bonsae.com.br/api/webhook/add-student-in-class
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
-| `emailAluno*` | string | Email do aluno |
-| `codigo*` | string | Código da turma |
+| `studentEmail*` | string | Email do aluno |
+| `subject*` | string | Código da turma |
 
 ### Exemplo de requisição
 ```
 {
-	"emailAluno":"bob@teste.com",
-	"codigo":"curso",
+	"studentEmail":"bob@teste.com",
+	"subject":"curso",
 }
 ```
 
-# Retorno da requisições
-O nossa api só retorna duas messagens em suas requições.
+# Retorno de erro
+A nossa api só retorna uma messagem de erro.
 
-```
-"SUCCESS"
-```
-ou 
 ```
 "ERROR_IN_REQUEST"
 ```
