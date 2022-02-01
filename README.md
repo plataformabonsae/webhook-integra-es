@@ -101,7 +101,7 @@ A criação de usuários via webhook possui apenas uma rota para facilitar a int
 | ------ | ------ |
 | coordenador | 1 |
 | professor | 2 |
-| secretário | 3 |
+| secretario | 3 |
 | aluno | 4 |
 | advogado | 5 |
 | estagiário | 6 |
@@ -130,7 +130,7 @@ A criação de usuários via webhook possui apenas uma rota para facilitar a int
 }
 ```
 
-### Variáveis para 'secretário'
+### Variáveis para 'secretario'
 
 | variável | tipo | Descrição |
 | ------ | ------ | ------ |
