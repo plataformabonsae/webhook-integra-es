@@ -285,6 +285,44 @@ A criação de usuários via webhook possui apenas uma rota para facilitar a int
 }
 ```
 
+# Atualizar um usuário
+
+> url https://instancia.bonsae.com.br/api/webhook/update-user
+
+| variável | tipo | Descrição |
+| ------ | ------ | ------ |
+| `email*` | string | Email do usuário para buscá-lo em nosso banco de dados |
+| `name` | string | Nome do usuário |
+| `registration_number` | string | Matrícula do usuário |
+| `access_token` | string | Token para autenticação do usuário |
+| `profile_id` | string | Identificador interno de perfil |
+
+### Exemplo de requisição
+```
+{
+	"email":"user@teste.com",
+	"name":"example",
+	"registration_number":"12345678",
+	"access_token":"dsgvsd2v3f6",
+	"profile_id": 6
+}
+```
+
+# Consultar um usuário
+
+> url https://instancia.bonsae.com.br/api/webhook/user
+
+| variável | tipo | Descrição |
+| ------ | ------ | ------ |
+| `email*` | string | Email do usuário |
+
+### Exemplo de requisição
+```
+{
+	"email":"bob@teste.com",
+}
+```
+
 # Retorno de erro
 A nossa api só retorna uma messagem de erro.
 
